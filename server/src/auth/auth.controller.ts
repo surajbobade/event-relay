@@ -7,6 +7,7 @@ import { REFRESH_TOKEN_AGE } from './constants';
 
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { User } from 'src/users/schemas/user.schema';
 
 @Controller('auth')
 export class AuthController {
@@ -75,6 +76,14 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     @Get('me')
     me(@Req() req) {
-        return req.user;
+        const user = req.user as User;
+
+        return {
+            _id: user._id,
+            profile: user.profile,
+            email: {
+                address: user.email.address,
+            },
+        };
     }
 }
