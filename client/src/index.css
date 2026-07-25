@@ -5,3 +5,10 @@ body {
     background-color: #111827; /* gray-900 */
     color: #f9fafb; /* gray-50 */
 }
+
+
+input,
+textarea,
+select {
+    color: #111827;
+}

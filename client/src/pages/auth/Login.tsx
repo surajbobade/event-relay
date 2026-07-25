@@ -9,6 +9,10 @@ import { useCallback } from 'react';
 import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '../../types/Api';
 import { getMe } from '../../api/users';
+import { AuthLayout } from '../../forms/auth/AuthLayout';
+import { TextField } from '../../forms/auth/TextField';
+import { PasswordField } from '../../forms/auth/PasswordField';
+import { Button } from '../../forms/auth/Button';
 
 const schema = z.object({
     email: z.string().email('Please enter a valid email'),
@@ -58,63 +62,37 @@ export function Login() {
     }, [navigate]);
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
-            <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
-                <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
-                    Welcome Back
-                </h1>
-
-                <div className="mb-5">
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Email
-                    </label>
-
-                    <input
-                        type="email"
-                        placeholder="Enter your email"
-                        {...register('email')}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-violet-500"
-                    />
-
-                    {errors.email && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.email.message}
-                        </p>
-                    )}
-                </div>
-
-                <div className="mb-6">
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Password
-                    </label>
-
-                    <input
-                        type="password"
-                        placeholder="Enter your password"
-                        {...register('password')}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-violet-500"
-                    />
-
-                    {errors.password && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.password.message}
-                        </p>
-                    )}
-                </div>
-
-                <button
-                    disabled={isSubmitting}
-                    className="w-full rounded-lg bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60">
-                    {isSubmitting ? 'Signing in...' : 'Login'}
-                </button>
+        <AuthLayout
+            title="Welcome Back 👋"
+            subtitle="Sign in to continue"
+            footer={
                 <div
-                    className="mb-2 block text-sm font-medium text-violet-600 text-end cursor-pointer"
+                    className="cursor-pointer text-right text-sm font-medium text-violet-600"
                     onClick={registerNewUser}>
                     Register new user?
                 </div>
+            }>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <TextField
+                    label="Email"
+                    type="email"
+                    placeholder="Enter your email"
+                    {...register('email')}
+                    error={errors.email?.message}
+                />
+                <PasswordField
+                    label="Password"
+                    placeholder="Enter your password"
+                    {...register('password')}
+                    error={errors.password?.message}
+                />
+                <Button
+                    type="submit"
+                    loading={isSubmitting}
+                    loadingText="Signing in...">
+                    Sign In
+                </Button>
             </form>
-        </div>
+        </AuthLayout>
     );
 }
