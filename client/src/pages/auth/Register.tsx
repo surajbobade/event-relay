@@ -61,7 +61,7 @@ export function Register() {
             subtitle="We are happy to see you here!"
             footer={
                 <div
-                    className="mb-2 block text-sm font-medium text-violet-600 text-end cursor-pointer"
+                    className="mb-2 block text-sm font-medium text-[var(--primary)] text-end cursor-pointer"
                     onClick={logUserIn}>
                     Already Registered? Sign In
                 </div>

@@ -67,7 +67,7 @@ export function Login() {
             subtitle="Sign in to continue"
             footer={
                 <div
-                    className="cursor-pointer text-right text-sm font-medium text-violet-600"
+                    className="cursor-pointer text-right text-sm font-medium text-[var(--primary)]"
                     onClick={registerNewUser}>
                     Register new user?
                 </div>

@@ -1,4 +1,9 @@
 export type User = {
-    userId: string;
-    email: string;
+    _id: string;
+    profile: {
+        name: string;
+    },
+    email: {
+        address: string;
+    }
 };
