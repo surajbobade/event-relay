@@ -62,7 +62,7 @@ export function EndpointHeader({ endpoint }: Props) {
                     </div>
                     <div className="flex gap-3">
                         <Button variant="default">
-                            <Pencil size={16} />
+                            <Pencil size={18} />
                         </Button>
                     </div>
                 </div>
