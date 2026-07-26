@@ -1,7 +1,5 @@
-import { ArrowLeft, Copy, Pencil, Power, Trash2, Globe } from 'lucide-react';
-import { useCallback } from 'react';
+import { ArrowLeft, Pencil, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { Button } from '../../forms/auth/Button';
 import type { EndpointDetails } from '../../types/Enpoint';

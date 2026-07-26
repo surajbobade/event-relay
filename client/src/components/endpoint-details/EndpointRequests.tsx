@@ -63,7 +63,7 @@ export function EmptyRequests({ endpoint }: Props) {
                 </Button>
 
                 <Button
-                    variant="white"
+                    variant="default"
                     className="w-auto px-5"
                     onClick={sendTestRequest}>
                     <Send size={18} />

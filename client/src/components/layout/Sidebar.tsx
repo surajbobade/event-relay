@@ -2,7 +2,6 @@ import {
     LayoutDashboard,
     Webhook,
     Activity,
-    KeyRound,
     Settings,
     LogOut,
     PanelLeftOpen,
@@ -12,7 +11,7 @@ import {
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { logout } from '../../api/auth';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '../../types/Api';
