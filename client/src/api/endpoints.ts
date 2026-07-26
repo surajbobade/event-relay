@@ -7,3 +7,11 @@ export const createEndpoint = (data: Record<string, unknown>) => {
 export const getEndpoints = () => {
     return apiClient.get('/endpoints');
 };
+
+export const getEndpoint = (endpointId: string) => {
+    return apiClient.get(`/endpoints/${endpointId}`);
+};
+
+export const getRequests = (endpointId: string) => {
+    return apiClient.get(`/requests/endpoint/${endpointId}`);
+};

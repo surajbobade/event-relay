@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { EndpointsController } from './endpoints.controller';
-import { EndpointsService } from './endpoints.service';
+import { RequestsController } from './requests.controller';
+import { RequestsService } from './requests.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Endpoint, EndpointSchema } from './schemas/endpoint.schema';
-import { Request, RequestSchema } from 'src/requests/schemas/request.schema';
+import { Request, RequestSchema } from './schemas/request.schema';
+import {
+    Endpoint,
+    EndpointSchema,
+} from 'src/endpoints/schemas/endpoint.schema';
 
 @Module({
     imports: [
@@ -13,6 +16,7 @@ import { Request, RequestSchema } from 'src/requests/schemas/request.schema';
                 schema: RequestSchema,
             },
         ]),
+
         MongooseModule.forFeature([
             {
                 name: Endpoint.name,
@@ -20,8 +24,8 @@ import { Request, RequestSchema } from 'src/requests/schemas/request.schema';
             },
         ]),
     ],
-    controllers: [EndpointsController],
-    providers: [EndpointsService],
-    exports: [EndpointsService],
+
+    controllers: [RequestsController],
+    providers: [RequestsService],
 })
-export class EndpointsModule {}
+export class RequestsModule {}

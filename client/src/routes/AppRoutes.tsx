@@ -7,6 +7,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Endpoints } from '../pages/endpoints/Endpoints';
+import { EndpointDetails } from '../pages/endpoints/EndpointDetails';
 
 export function AppRoutes() {
     return (
@@ -38,6 +39,10 @@ export function AppRoutes() {
                 }>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/endpoints" element={<Endpoints />} />
+                <Route
+                    path="/endpoints/:endpointId"
+                    element={<EndpointDetails />}
+                />
             </Route>
         </Routes>
     );

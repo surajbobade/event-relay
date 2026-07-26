@@ -1,14 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEndpointDto } from './dto/create-endpoint.dto';
 import { Endpoint, EndpointDocument } from './schemas/endpoint.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Request } from 'src/requests/schemas/request.schema';
 
 @Injectable()
 export class EndpointsService {
     constructor(
         @InjectModel(Endpoint.name)
         private readonly endpointModel: Model<EndpointDocument>,
+
+        @InjectModel(Request.name)
+        private readonly requestModel: Model<Request>,
     ) {}
 
     async create(userId: string, dto: CreateEndpointDto) {
@@ -58,5 +62,24 @@ export class EndpointsService {
             cAt: endpoint.cAt,
             uAt: endpoint.uAt,
         }));
+    }
+
+    async getEndpointDetails(userId: string, endpointId: string): Promise<Record<string, any>> {
+        const endpoint = await this.endpointModel.findOne({
+            _id: endpointId,
+            oId: userId,
+        });
+        if (!endpoint) {
+            throw new NotFoundException('Endpoint not found.');
+        }
+
+        const request = await this.requestModel.findOne({
+            endpointId: endpoint._id,
+        });
+
+        return {
+            ...endpoint.toObject(),
+            hasRequests: !!request,
+        };
     }
 }
