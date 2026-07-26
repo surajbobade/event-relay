@@ -30,7 +30,7 @@ export function RequestHistoryItem({ request }: Props) {
                     </div>
                 </div>
 
-                <StatusBadge status={request.response?.status} />
+                <StatusBadge status={request.response?.status || 200} />
 
                 <ChevronDown
                     size={18}

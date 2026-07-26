@@ -4,4 +4,9 @@ export type Request = {
     path: string;
     status: number;
     cAt: string;
+    body?: Record<string, any>;
+    response?: {
+        status: number;
+        body?: Record<string, any>;
+    }
 };
