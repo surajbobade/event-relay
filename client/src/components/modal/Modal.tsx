@@ -2,22 +2,16 @@ import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 type ModalProps = {
-    open: boolean;
     title: string;
     children: ReactNode;
     onClose: () => void;
 };
 
 export function Modal({
-    open,
     title,
     children,
     onClose,
 }: ModalProps) {
-    if (!open) {
-        return null;
-    }
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="w-full max-w-xl rounded-2xl bg-white text-gray-900 shadow-2xl">

@@ -5,6 +5,8 @@ import { Dashboard } from '../pages/dashboard/Dashboard';
 import { Register } from '../pages/auth/Register';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
+import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { Endpoints } from '../pages/endpoints/Endpoints';
 
 export function AppRoutes() {
     return (
@@ -26,14 +28,17 @@ export function AppRoutes() {
                     </PublicRoute>
                 }
             />
+
+            {/* Protected */}
             <Route
-                path="/"
                 element={
                     <ProtectedRoute>
-                        <Dashboard />
+                        <DashboardLayout />
                     </ProtectedRoute>
-                }
-            />
+                }>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/endpoints" element={<Endpoints />} />
+            </Route>
         </Routes>
     );
 }

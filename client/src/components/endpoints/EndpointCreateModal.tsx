@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 
 import { Modal } from '../modal/Modal';
@@ -5,41 +6,71 @@ import { TextField } from '../../forms/auth/TextField';
 import { Button } from '../../forms/auth/Button';
 import { TextareaField } from '../../forms/auth/TextareaField';
 import { PostfixTextField } from '../../forms/auth/PostfixTextField';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createEndpoint } from '../../api/endpoints';
+import type { AxiosError } from 'axios';
+import type { ApiErrorResponse } from '../../types/Api';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 type Props = {
     open: boolean;
     onClose: () => void;
 };
 
-type FormValues = {
-    name: string;
-    endpoint: string;
-    method: string;
-    description: string;
-};
+const schema = z.object({
+    name: z
+        .string()
+        .trim()
+        .min(3, 'Endpoint name must be at least 3 characters.')
+        .max(50, 'Endpoint name cannot exceed 50 characters.'),
+    domain: z
+        .string()
+        .trim()
+        .min(3, 'Endpoint must be at least 3 characters.')
+        .max(50, 'Endpoint cannot exceed 50 characters.')
+        .regex(
+            /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+            'Only lowercase letters, numbers and hyphens are allowed.',
+        ),
+    description: z
+        .string()
+        .trim()
+        .max(200, 'Description cannot exceed 200 characters.')
+        .optional()
+        .or(z.literal('')),
+});
 
-export function CreateEndpointModal({ open, onClose }: Props) {
+type FormValues = z.infer<typeof schema>;
+
+export function CreateEndpointModal({ onClose }: Props) {
+    const navigate = useNavigate();
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, disabled },
     } = useForm<FormValues>({
-        defaultValues: {
-            method: 'ANY',
-        },
+        resolver: zodResolver(schema),
     });
 
     async function onSubmit(data: FormValues) {
-        console.log(data);
+        try {
+            const result = await createEndpoint(data);
 
-        // TODO:
-        // await createEndpoint(data)
-
-        onClose();
+            onClose();
+            navigate(`/endpoints/${result.data.endpointId}`);
+        } catch (err) {
+            const error = err as AxiosError<ApiErrorResponse>;
+            toast.error(
+                error.response?.data?.message ||
+                    error.message ||
+                    'Something went wrong.',
+            );
+        }
     }
 
     return (
-        <Modal open={open} title="Create Endpoint" onClose={onClose}>
+        <Modal title="Create Endpoint" onClose={onClose}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <TextField
                     label="Endpoint Name"
@@ -53,10 +84,10 @@ export function CreateEndpointModal({ open, onClose }: Props) {
                     label="Endpoint"
                     postfix=".requeststudio.com"
                     placeholder="test-payment-webhook"
-                    {...register('endpoint', {
+                    {...register('domain', {
                         required: 'Endpoint is required',
                     })}
-                    error={errors.endpoint?.message}
+                    error={errors.domain?.message}
                 />
                 <TextareaField
                     label="Description"
@@ -72,6 +103,7 @@ export function CreateEndpointModal({ open, onClose }: Props) {
                     <Button
                         type="submit"
                         loading={isSubmitting}
+                        disabled={disabled}
                         loadingText="Creating...">
                         Create Endpoint
                     </Button>
