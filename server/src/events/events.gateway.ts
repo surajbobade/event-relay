@@ -14,7 +14,7 @@ import { EVENT_HISTORY_CHANNEL } from './events.constants';
 @WebSocketGateway({
     namespace: 'events',
     cors: {
-        origin: ['http://localhost:5173', 'https://request-studio.vercel.app'],
+        origin: ['http://localhost:5173', 'https://app.eventrelay.in',],
         credentials: true,
     },
 })
