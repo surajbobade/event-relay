@@ -5,7 +5,11 @@ import { Model } from 'mongoose';
 import { Queue } from 'bullmq';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { CreateEventDto } from './dto/create-event.dto';
-import { WEBHOOK_DELIVERY_QUEUE } from './events.constants';
+import {
+    DELIVERY_BACKOFF_BASE_DELAY_MS,
+    DELIVERY_MAX_ATTEMPTS,
+    WEBHOOK_DELIVERY_QUEUE,
+} from './events.constants';
 import {
     EventHistory,
     EventHistoryDocument,
@@ -50,14 +54,24 @@ export class EventsService {
 
         await Promise.all(
             webhooks.map((webhook) =>
-                this.deliveryQueue.add(dto.event, {
-                    eventId: eventHistory.id,
-                    webhookId: webhook._id,
-                    targetUrl: webhook.targetUrl,
-                    event: dto.event,
-                    payload: dto.payload ?? null,
-                    oId: userId,
-                }),
+                this.deliveryQueue.add(
+                    dto.event,
+                    {
+                        eventId: eventHistory.id,
+                        webhookId: webhook._id,
+                        targetUrl: webhook.targetUrl,
+                        event: dto.event,
+                        payload: dto.payload ?? null,
+                        oId: userId,
+                    },
+                    {
+                        attempts: DELIVERY_MAX_ATTEMPTS,
+                        backoff: {
+                            type: 'exponential',
+                            delay: DELIVERY_BACKOFF_BASE_DELAY_MS,
+                        },
+                    },
+                ),
             ),
         );
 
@@ -93,6 +107,51 @@ export class EventsService {
             page,
             limit,
             totalPages: Math.max(1, Math.ceil(total / limit)),
+        };
+    }
+
+    async getStatsToday(userId: string) {
+        const startOfDay = new Date();
+        startOfDay.setUTCHours(0, 0, 0, 0);
+
+        const [result] = await this.eventHistoryModel.aggregate([
+            {
+                $match: {
+                    oId: userId,
+                    cAt: { $gte: startOfDay },
+                },
+            },
+            {
+                $facet: {
+                    received: [{ $count: 'count' }],
+                    success: [
+                        { $match: { status: EventHistoryStatus.Success } },
+                        { $count: 'count' },
+                    ],
+                    failed: [
+                        { $match: { status: EventHistoryStatus.Failed } },
+                        { $count: 'count' },
+                    ],
+                    noSubscribers: [
+                        {
+                            $match: {
+                                status: EventHistoryStatus.NoSubscribers,
+                            },
+                        },
+                        { $count: 'count' },
+                    ],
+                },
+            },
+        ]);
+
+        const pick = (bucket?: Array<{ count: number }>) =>
+            bucket?.[0]?.count ?? 0;
+
+        return {
+            received: pick(result?.received),
+            success: pick(result?.success),
+            failed: pick(result?.failed),
+            noSubscribers: pick(result?.noSubscribers),
         };
     }
 }

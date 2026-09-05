@@ -8,6 +8,7 @@ import { PublicRoute } from './PublicRoute';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Webhooks } from '../pages/webhooks/Webhooks';
 import { WebhookCreate } from '../pages/webhooks/WebhookCreate';
+import { WebhookEdit } from '../pages/webhooks/WebhookEdit';
 import { ApiKeys } from '../pages/api-keys/ApiKeys';
 import { Events } from '../pages/events/Events';
 
@@ -42,6 +43,10 @@ export function AppRoutes() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path='/webhooks' element={<Webhooks />} />
                 <Route path='/webhooks/create' element={<WebhookCreate />} />
+                <Route
+                    path='/webhooks/:webhookId/edit'
+                    element={<WebhookEdit />}
+                />
                 <Route path='/api-keys' element={<ApiKeys />} />
                 <Route path='/events' element={<Events />} />
             </Route>

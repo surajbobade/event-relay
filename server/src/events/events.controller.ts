@@ -32,4 +32,10 @@ export class EventsController {
             query.limit ?? 20,
         );
     }
+
+    @Get('stats')
+    @UseGuards(JwtAuthGuard)
+    getStats(@Req() req) {
+        return this.eventsService.getStatsToday(req.user._id);
+    }
 }

@@ -1,22 +1,17 @@
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import {
-    Activity,
-    CircleCheck,
-    CircleAlert,
-    ChevronLeft,
-    ChevronRight,
-} from 'lucide-react';
+import { Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
 import { getEvents } from '../../api/events';
 import { useAuth } from '../../hooks/useAuth';
 import { useModal } from '../../components/modal/useModal';
 import { EventPayloadModal } from '../../components/events/EventPayloadModal';
-import type { EventHistoryItem } from '../../types/Event';
+import { EventStatusBadge } from '../../components/events/EventStatusBadge';
+import type { EventHistoryItem, EventUpdateMessage } from '../../types/Event';
 import type { ApiErrorResponse } from '../../types/Api';
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 export function Events() {
     const { accessToken } = useAuth();
@@ -59,16 +54,34 @@ export function Events() {
         socket.on('connect', () => setLive(true));
         socket.on('disconnect', () => setLive(false));
 
-        socket.on('event:new', (event: EventHistoryItem) => {
-            setTotal((current) => current + 1);
+        socket.on('event:new', (event: EventUpdateMessage) => {
+            if (event.isNew) {
+                setTotal((current) => current + 1);
+            }
 
             // Only the first page shows newest-first live updates —
-            // other pages would otherwise shift under the reader.
+            // other pages would otherwise shift under the reader. A
+            // status update (isNew: false) patches an existing row in
+            // place instead of prepending a duplicate.
             setPage((currentPage) => {
                 if (currentPage === 1) {
-                    setEvents((current) =>
-                        [event, ...current].slice(0, PAGE_SIZE),
-                    );
+                    setEvents((current) => {
+                        const exists = current.some(
+                            (item) => item._id === event._id,
+                        );
+
+                        if (exists) {
+                            return current.map((item) =>
+                                item._id === event._id ? event : item,
+                            );
+                        }
+
+                        if (!event.isNew) {
+                            return current;
+                        }
+
+                        return [event, ...current].slice(0, PAGE_SIZE);
+                    });
                 }
 
                 return currentPage;
@@ -113,7 +126,7 @@ export function Events() {
                 {/* Events table */}
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                     {/* Table header */}
-                    <div className="grid grid-cols-[2fr_3fr_1.5fr_1.5fr] items-center gap-4 border-b border-gray-200 bg-gray-50 px-5 py-3">
+                    <div className="grid grid-cols-[2fr_3fr_1.5fr_1fr_1.5fr] items-center gap-4 border-b border-gray-200 bg-gray-50 px-5 py-3">
                         <div className="text-xs font-medium uppercase tracking-wider text-gray-500">
                             Event
                         </div>
@@ -124,6 +137,10 @@ export function Events() {
 
                         <div className="text-xs font-medium uppercase tracking-wider text-gray-500">
                             Status
+                        </div>
+
+                        <div className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                            Attempts
                         </div>
 
                         <div className="text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -141,7 +158,7 @@ export function Events() {
                                     props: { event },
                                 })
                             }
-                            className="grid cursor-pointer grid-cols-[2fr_3fr_1.5fr_1.5fr] items-center gap-4 border-b border-gray-100 px-5 py-4 transition last:border-b-0 hover:bg-gray-50">
+                            className="grid cursor-pointer grid-cols-[2fr_3fr_1.5fr_1fr_1.5fr] items-center gap-4 border-b border-gray-100 px-5 py-4 transition last:border-b-0 hover:bg-gray-50">
                             {/* Name */}
                             <div className="flex min-w-0 items-center gap-3">
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100">
@@ -164,17 +181,19 @@ export function Events() {
 
                             {/* Status */}
                             <div>
-                                {event.status === 'queued' ? (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                                        <CircleCheck className="h-3.5 w-3.5" />
-                                        Queued ({event.webhookIds.length})
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-                                        <CircleAlert className="h-3.5 w-3.5" />
-                                        No Subscribers
-                                    </span>
-                                )}
+                                <EventStatusBadge
+                                    status={event.status}
+                                    webhookCount={event.webhookIds.length}
+                                />
+                            </div>
+
+                            {/* Attempts */}
+                            <div className="text-sm text-gray-600">
+                                {event.deliveries?.reduce(
+                                    (sum, delivery) =>
+                                        sum + (delivery.attempts?.length || 0),
+                                    0,
+                                ) || 0}
                             </div>
 
                             {/* Received */}

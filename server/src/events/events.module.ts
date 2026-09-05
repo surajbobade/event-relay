@@ -9,6 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 import { EventsGateway } from './events.gateway';
+import { EventsWorker } from './events.worker';
 import { WEBHOOK_DELIVERY_QUEUE } from './events.constants';
 import {
     EventHistory,
@@ -32,6 +33,6 @@ import {
         ]),
     ],
     controllers: [EventsController],
-    providers: [EventsService, EventsGateway],
+    providers: [EventsService, EventsGateway, EventsWorker],
 })
 export class EventsModule {}

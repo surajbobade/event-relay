@@ -34,7 +34,7 @@ export function WebhookCreate() {
 
     return (
         <div className="min-h-full p-6">
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-7xl">
                 <div className="mb-6">
                     <button
                         type="button"

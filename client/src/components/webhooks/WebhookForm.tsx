@@ -1,14 +1,19 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, type LucideIcon } from 'lucide-react';
 import { Button } from '../../forms/auth/Button';
 
+interface WebhookFormValues {
+    name: string;
+    targetUrl: string;
+    events: string[];
+    active: boolean;
+}
+
 interface WebhookFormProps {
-    onSubmit?: (data: {
-        name: string;
-        targetUrl: string;
-        events: string[];
-        active: boolean;
-    }) => void;
+    initialValues?: WebhookFormValues;
+    submitLabel?: string;
+    submitIcon?: LucideIcon;
+    onSubmit?: (data: WebhookFormValues) => void;
     onCancel?: () => void;
 }
 
@@ -21,13 +26,18 @@ const availableEvents = [
 ];
 
 export function WebhookForm({
+    initialValues,
+    submitLabel = 'Create Webhook',
+    submitIcon: SubmitIcon = Plus,
     onSubmit,
     onCancel,
 }: WebhookFormProps) {
-    const [name, setName] = useState('');
-    const [targetUrl, setTargetUrl] = useState('');
-    const [events, setEvents] = useState<string[]>([]);
-    const [active, setActive] = useState(true);
+    const [name, setName] = useState(initialValues?.name ?? '');
+    const [targetUrl, setTargetUrl] = useState(initialValues?.targetUrl ?? '');
+    const [events, setEvents] = useState<string[]>(
+        initialValues?.events ?? [],
+    );
+    const [active, setActive] = useState(initialValues?.active ?? true);
 
     const [errors, setErrors] = useState<{
         name?: string;
@@ -238,7 +248,7 @@ export function WebhookForm({
                     {onCancel && (
                         <Button
                             type="button"
-                            variant="secondary"
+                            variant="default"
                             onClick={onCancel}
                         >
                             Cancel
@@ -249,8 +259,8 @@ export function WebhookForm({
                         type="submit"
                         className="inline-flex items-center gap-2"
                     >
-                        <Plus className="h-4 w-4" />
-                        Create Webhook
+                        <SubmitIcon className="h-4 w-4" />
+                        {submitLabel}
                     </Button>
                 </div>
             </form>

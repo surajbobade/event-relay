@@ -1,5 +1,6 @@
 import {
     MoreHorizontal,
+    Pencil,
     Plus,
     Trash2,
     Webhook as WebhookIcon,
@@ -247,6 +248,19 @@ export function Webhooks() {
                                     <div
                                         ref={menuRef}
                                         className="absolute right-0 bottom-full z-10 mb-1 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setOpenMenuId(null);
+                                                navigate(
+                                                    `/webhooks/${webhook._id}/edit`,
+                                                );
+                                            }}
+                                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
+                                            <Pencil className="h-4 w-4" />
+                                            Edit
+                                        </button>
+
                                         <button
                                             type="button"
                                             onClick={() =>

@@ -7,9 +7,63 @@ import { EVENT_HISTORY_CHANNEL } from '../events.constants';
 export type EventHistoryDocument = HydratedDocument<EventHistory>;
 
 export enum EventHistoryStatus {
-    Queued = 'queued',
-    NoSubscribers = 'no_subscribers',
+    Queued = 'q',
+    NoSubscribers = 'ns',
+    InProgress = 'ip',
+    Success = 's',
+    Failed = 'f',
 }
+
+// One row per delivery try (including retries) for a given webhook.
+@Schema({ _id: false })
+export class AttemptLog {
+    @Prop({
+        type: String,
+        enum: ['success', 'failed'],
+        required: true,
+    })
+    s!: 'success' | 'failed';
+
+    @Prop()
+    eM?: string;
+
+    @Prop({
+        required: true,
+    })
+    aAt!: Date;
+}
+
+export const AttemptLogSchema = SchemaFactory.createForClass(AttemptLog);
+
+@Schema({ _id: false })
+export class Delivery {
+    @Prop({
+        required: true,
+    })
+    webhookId!: string;
+
+    // 'pending' while retries are still possible; set to a terminal
+    // value once the webhook either succeeds or exhausts all attempts.
+    @Prop({
+        type: String,
+        enum: ['pending', 'success', 'failed'],
+        default: 'pending',
+    })
+    status!: 'pending' | 'success' | 'failed';
+
+    @Prop({
+        type: [AttemptLogSchema],
+        default: [],
+    })
+    attempts!: AttemptLog[];
+
+    // Only set while status is 'failed' and a retry is still scheduled;
+    // cleared once the delivery succeeds or exhausts all attempts.
+    @Prop()
+    nextAttemptAt?: Date;
+}
+
+export const DeliverySchema = SchemaFactory.createForClass(Delivery);
 
 @Schema({
     timestamps: {
@@ -54,12 +108,26 @@ export class EventHistory {
     })
     webhookIds!: string[];
 
+    @Prop({
+        type: [DeliverySchema],
+        default: [],
+    })
+    deliveries!: Delivery[];
+
     // Gets added by mongoose timestamps
     cAt!: Date;
     uAt!: Date;
 }
 
-function publishChange(redis: Redis, doc: EventHistoryDocument) {
+// `isNew` tells subscribers whether this is a brand-new event or a
+// status update to one they may have already seen (e.g. the delivery
+// worker moving it from queued -> success), so they know whether to
+// prepend a row or patch an existing one in place.
+function publishChange(
+    redis: Redis,
+    doc: EventHistoryDocument,
+    isNew: boolean,
+) {
     redis.publish(
         EVENT_HISTORY_CHANNEL,
         JSON.stringify({
@@ -69,7 +137,9 @@ function publishChange(redis: Redis, doc: EventHistoryDocument) {
             payload: doc.payload,
             status: doc.status,
             webhookIds: doc.webhookIds,
+            deliveries: doc.deliveries,
             cAt: doc.cAt,
+            isNew,
         }),
     );
 }
@@ -84,7 +154,7 @@ export function createEventHistorySchema(redis: Redis) {
     const schema = SchemaFactory.createForClass(EventHistory);
 
     schema.post('save', function (doc: EventHistoryDocument) {
-        publishChange(redis, doc);
+        publishChange(redis, doc, true);
     });
 
     // findOneAndUpdate/findByIdAndUpdate return the pre-update doc unless
@@ -98,7 +168,7 @@ export function createEventHistorySchema(redis: Redis) {
         'findOneAndUpdate',
         function (doc: EventHistoryDocument | null) {
             if (doc) {
-                publishChange(redis, doc);
+                publishChange(redis, doc, false);
             }
         },
     );
@@ -124,7 +194,7 @@ export function createEventHistorySchema(redis: Redis) {
             _id: { $in: this._affectedIds },
         });
 
-        docs.forEach((doc) => publishChange(redis, doc));
+        docs.forEach((doc) => publishChange(redis, doc, false));
     });
 
     return schema;

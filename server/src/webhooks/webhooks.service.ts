@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
+import { UpdateWebhookDto } from './dto/update-webhook.dto';
 import { Webhook, WebhookDocument } from './schemas/webhook.schema';
 
 @Injectable()
@@ -59,6 +60,36 @@ export class WebhooksService {
                 events: event,
             })
             .lean();
+    }
+
+    async updateWebhook(
+        userId: string,
+        webhookId: string,
+        dto: UpdateWebhookDto,
+    ) {
+        const webhook = await this.webhookModel.findOneAndUpdate(
+            {
+                _id: webhookId,
+                oId: userId,
+            },
+            {
+                ...(dto.name !== undefined && { name: dto.name.trim() }),
+                ...(dto.targetUrl !== undefined && {
+                    targetUrl: dto.targetUrl.trim(),
+                }),
+                ...(dto.events !== undefined && { events: dto.events }),
+                ...(dto.active !== undefined && { active: dto.active }),
+            },
+            {
+                new: true,
+            },
+        );
+
+        if (!webhook) {
+            throw new NotFoundException('Webhook not found.');
+        }
+
+        return webhook;
     }
 
     async deleteWebhook(userId: string, webhookId: string) {
