@@ -3,12 +3,14 @@ import { X } from 'lucide-react';
 
 type ModalProps = {
     title: string;
+    subtitle?: string;
     children: ReactNode;
     onClose: () => void;
 };
 
 export function Modal({
     title,
+    subtitle,
     children,
     onClose,
 }: ModalProps) {
@@ -18,9 +20,11 @@ export function Modal({
                 <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
                     <div>
                         <h2 className="text-xl font-semibold">{title}</h2>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Configure your endpoint details.
-                        </p>
+                        {subtitle && (
+                            <p className="mt-1 text-sm text-gray-500">
+                                {subtitle}
+                            </p>
+                        )}
                     </div>
 
                     <button
@@ -31,7 +35,9 @@ export function Modal({
                     </button>
                 </div>
 
-                <div className="p-6">{children}</div>
+                <div className="max-h-[70vh] overflow-y-auto p-6">
+                    {children}
+                </div>
             </div>
         </div>
     );

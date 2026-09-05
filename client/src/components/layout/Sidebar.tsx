@@ -2,6 +2,7 @@ import {
     LayoutDashboard,
     Webhook,
     Activity,
+    KeyRound,
     LogOut,
     PanelLeftOpen,
     PanelLeftClose,
@@ -126,6 +127,12 @@ export function Sidebar({ collapsed, toggleCollapsed }: SidebarProps) {
                     to="/events"
                     icon={Activity}
                     label="Events"
+                    collapsed={collapsed}
+                />
+                <SidebarLink
+                    to="/api-keys"
+                    icon={KeyRound}
+                    label="API Keys"
                     collapsed={collapsed}
                 />
             </nav>

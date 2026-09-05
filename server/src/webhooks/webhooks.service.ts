@@ -50,4 +50,25 @@ export class WebhooksService {
 
         return webhook;
     }
+
+    async findActiveForEvent(userId: string, event: string) {
+        return this.webhookModel
+            .find({
+                oId: userId,
+                active: true,
+                events: event,
+            })
+            .lean();
+    }
+
+    async deleteWebhook(userId: string, webhookId: string) {
+        const result = await this.webhookModel.deleteOne({
+            _id: webhookId,
+            oId: userId,
+        });
+
+        if (result.deletedCount === 0) {
+            throw new NotFoundException('Webhook not found.');
+        }
+    }
 }

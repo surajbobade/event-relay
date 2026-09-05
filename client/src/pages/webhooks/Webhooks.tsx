@@ -1,22 +1,25 @@
 import {
     MoreHorizontal,
     Plus,
+    Trash2,
     Webhook as WebhookIcon,
     CircleCheck,
     CircleX,
 } from 'lucide-react';
 import { Button } from '../../forms/auth/Button';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
-import { getWebhooks } from '../../api/webhooks';
+import { deleteWebhook, getWebhooks } from '../../api/webhooks';
 import type { Webhook } from '../../types/Webhook';
 import type { ApiErrorResponse } from '../../types/Api';
 
 export function Webhooks() {
     const navigate = useNavigate();
     const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const fetchWebhooks = async () => {
@@ -36,9 +39,53 @@ export function Webhooks() {
         fetchWebhooks();
     }, []);
 
+    useEffect(() => {
+        if (!openMenuId) {
+            return;
+        }
+
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
+    }, [openMenuId]);
+
     const createWebhook = useCallback(() => {
         navigate('/webhooks/create');
     }, [navigate]);
+
+    const handleDelete = async (webhook: Webhook) => {
+        setOpenMenuId(null);
+
+        if (
+            !window.confirm(
+                `Delete webhook "${webhook.name}"? This cannot be undone.`,
+            )
+        ) {
+            return;
+        }
+
+        try {
+            await deleteWebhook(webhook._id);
+            setWebhooks((current) =>
+                current.filter((item) => item._id !== webhook._id),
+            );
+            toast.success('Webhook deleted');
+        } catch (err: unknown) {
+            const error = err as AxiosError<ApiErrorResponse>;
+            toast.error(
+                error.response?.data?.message ||
+                    error.message ||
+                    'Something went wrong.',
+            );
+        }
+    };
 
     return (
         <div className="min-h-full p-6">
@@ -177,16 +224,41 @@ export function Webhooks() {
                             </div>
 
                             {/* Actions */}
-                            <button
-                                className="
+                            <div className="relative">
+                                <button
+                                    onClick={() =>
+                                        setOpenMenuId((current) =>
+                                            current === webhook._id
+                                                ? null
+                                                : webhook._id,
+                                        )
+                                    }
+                                    className="
                   rounded-md p-1.5
                   text-gray-400
                   transition
                   hover:bg-gray-100
                   hover:text-gray-700
                 ">
-                                <MoreHorizontal className="h-5 w-5" />
-                            </button>
+                                    <MoreHorizontal className="h-5 w-5" />
+                                </button>
+
+                                {openMenuId === webhook._id && (
+                                    <div
+                                        ref={menuRef}
+                                        className="absolute right-0 bottom-full z-10 mb-1 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleDelete(webhook)
+                                            }
+                                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 transition hover:bg-red-50">
+                                            <Trash2 className="h-4 w-4" />
+                                            Delete
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ))}
 

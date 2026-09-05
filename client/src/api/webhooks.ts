@@ -12,3 +12,7 @@ export const createWebhook = (data: {
 }) => {
     return apiClient.post('/webhooks', data);
 };
+
+export const deleteWebhook = (id: string) => {
+    return apiClient.delete(`/webhooks/${id}`);
+};

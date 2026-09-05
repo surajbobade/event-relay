@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    Param,
+    Post,
+    Req,
+    UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { WebhooksService } from './webhooks.service';
@@ -21,5 +31,11 @@ export class WebhooksController {
     @Get(':webhookId')
     getWebhook(@Req() req, @Param('webhookId') webhookId: string) {
         return this.webhooksService.getWebhookDetails(req.user._id, webhookId);
+    }
+
+    @Delete(':webhookId')
+    @HttpCode(204)
+    deleteWebhook(@Req() req, @Param('webhookId') webhookId: string) {
+        return this.webhooksService.deleteWebhook(req.user._id, webhookId);
     }
 }
