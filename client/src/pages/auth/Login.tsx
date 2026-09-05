@@ -64,7 +64,7 @@ export function Login() {
     return (
         <AuthLayout
             title="Welcome Back 👋"
-            subtitle="Sign in to continue"
+            subtitle="Log in to continue"
             footer={
                 <div
                     className="cursor-pointer text-right text-sm font-medium text-[var(--primary)]"
@@ -89,8 +89,8 @@ export function Login() {
                 <Button
                     type="submit"
                     loading={isSubmitting}
-                    loadingText="Signing in...">
-                    Sign In
+                    loadingText="Logging in...">
+                    Log In
                 </Button>
             </form>
         </AuthLayout>

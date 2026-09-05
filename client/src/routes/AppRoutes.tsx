@@ -6,8 +6,8 @@ import { Register } from '../pages/auth/Register';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Endpoints } from '../pages/endpoints/Endpoints';
-import { EndpointDetails } from '../pages/endpoints/EndpointDetails';
+import { Webhooks } from '../pages/webhooks/Webhooks';
+import { WebhookCreate } from '../pages/webhooks/WebhookCreate';
 
 export function AppRoutes() {
     return (
@@ -38,11 +38,8 @@ export function AppRoutes() {
                     </ProtectedRoute>
                 }>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/endpoints" element={<Endpoints />} />
-                <Route
-                    path="/endpoints/:endpointId"
-                    element={<EndpointDetails />}
-                />
+                <Route path='/webhooks' element={<Webhooks />} />
+                <Route path='/webhooks/create' element={<WebhookCreate />} />
             </Route>
         </Routes>
     );

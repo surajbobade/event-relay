@@ -2,7 +2,6 @@ import {
     LayoutDashboard,
     Webhook,
     Activity,
-    Settings,
     LogOut,
     PanelLeftOpen,
     PanelLeftClose,
@@ -89,11 +88,11 @@ export function Sidebar({ collapsed, toggleCollapsed }: SidebarProps) {
                 {!collapsed ? (
                     <div>
                         <h1 className="text-xl font-bold text-[var(--primary)]">
-                            Request Studio
+                            Event Relay
                         </h1>
 
                         <p className="text-xs text-gray-400">
-                            Build. Test. Debug APIs.
+                            Event Delivery Infrastructure
                         </p>
                     </div>
                 ) : (
@@ -118,21 +117,15 @@ export function Sidebar({ collapsed, toggleCollapsed }: SidebarProps) {
                     end
                 />
                 <SidebarLink
-                    to="/endpoints"
+                    to="/webhooks"
                     icon={Webhook}
-                    label="Endpoints"
+                    label="Webhooks"
                     collapsed={collapsed}
                 />
                 <SidebarLink
-                    to="/requests"
+                    to="/events"
                     icon={Activity}
-                    label="Requests"
-                    collapsed={collapsed}
-                />
-                <SidebarLink
-                    to="/settings"
-                    icon={Settings}
-                    label="Settings"
+                    label="Events"
                     collapsed={collapsed}
                 />
             </nav>

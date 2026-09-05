@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Post,
+    Req,
+    Res,
+    UnauthorizedException,
+    UseGuards,
+} from '@nestjs/common';
 
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -42,7 +51,11 @@ export class AuthController {
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
     ) {
-        const refreshToken = req.cookies.refreshToken;
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            throw new UnauthorizedException();
+        }
+
         const tokens = await this.authService.refresh(refreshToken);
 
         res.cookie('refreshToken', tokens.refreshToken, {

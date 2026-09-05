@@ -6,9 +6,13 @@ type PublicRouteProps = {
 };
 
 export function PublicRoute({ children }: PublicRouteProps) {
-    const { accessToken } = useAuth();
+    const { user, isLoading } = useAuth();
 
-    if (accessToken) {
+    if (isLoading) {
+        return null;
+    }
+
+    if (user) {
         return <Navigate to="/" replace />;
     }
 

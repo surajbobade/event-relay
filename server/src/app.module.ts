@@ -5,9 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { EndpointsModule } from './endpoints/endpoints.module';
-import { RequestsModule } from './requests/requests.module';
-import { CaptureModule } from './capture/capture.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
     imports: [
@@ -22,9 +20,7 @@ import { CaptureModule } from './capture/capture.module';
         }),
         AuthModule,
         UsersModule,
-        EndpointsModule,
-        RequestsModule,
-        CaptureModule,
+        WebhooksModule,
     ],
     controllers: [AppController],
     providers: [AppService],

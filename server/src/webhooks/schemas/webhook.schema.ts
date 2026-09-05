@@ -2,7 +2,7 @@ import { HydratedDocument } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { nanoid } from 'nanoid';
 
-export type EndpointDocument = HydratedDocument<Endpoint>;
+export type WebhookDocument = HydratedDocument<Webhook>;
 
 @Schema({
     timestamps: {
@@ -11,7 +11,7 @@ export type EndpointDocument = HydratedDocument<Endpoint>;
     },
     versionKey: false,
 })
-export class Endpoint {
+export class Webhook {
     @Prop({
         type: String,
         default: () => nanoid(),
@@ -20,7 +20,6 @@ export class Endpoint {
 
     @Prop({
         required: true,
-
     })
     oId!: string;
 
@@ -32,23 +31,24 @@ export class Endpoint {
 
     @Prop({
         required: true,
-        unique: true,
-        lowercase: true,
         trim: true,
     })
-    domain!: string;
+    targetUrl!: string;
 
     @Prop({
-        trim: true,
-        maxLength: 2000,
+        type: [String],
+        required: true,
     })
-    desc?: string;
+    events!: string[];
 
-    ia?: boolean;
+    @Prop({
+        default: true,
+    })
+    active!: boolean;
 
     // Gets added by mongoose timestamps
     cAt!: Date;
     uAt!: Date;
 }
 
-export const EndpointSchema = SchemaFactory.createForClass(Endpoint);
+export const WebhookSchema = SchemaFactory.createForClass(Webhook);

@@ -1,20 +1,8 @@
-import { Bell, Plus } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useLocation } from 'react-router-dom';
-import { useCallback } from 'react';
-import { useModal } from '../modal/useModal';
-import { CreateEndpointModal } from '../endpoints/EndpointCreateModal';
 
 export function Navbar() {
     const { user } = useAuth();
-    const { pathname } = useLocation();
-    const { openModal } = useModal();
-
-    const openCreatendpointModal = useCallback(() => {
-        openModal({
-            component: CreateEndpointModal,
-        })
-    }, [openModal]);
 
     return (
         <header className="flex h-16 items-center justify-between border-b border-gray-800 bg-gray-900 px-8">
@@ -25,14 +13,6 @@ export function Navbar() {
                 /> */}
             </div>
             <div className="flex items-center gap-5">
-                {pathname === '/' && (
-                    <button
-                        onClick={openCreatendpointModal}
-                        className="flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-2 font-medium transition hover:bg-[var(--primary-hover)]">
-                        <Plus size={18} />
-                        New Endpoint
-                    </button>
-                )}
                 <button className="relative rounded-full p-2 hover:bg-gray-800">
                     <Bell size={20} />
                     <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[var(--danger)]" />
