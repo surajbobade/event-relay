@@ -7,7 +7,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     app.enableCors({
-        origin: ['http://localhost:5173', 'https://request-studio.vercel.app'],
+        origin: ['http://localhost:5173', 'https://eventrelay.in'],
         credentials: true,
     });
 
