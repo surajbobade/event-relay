@@ -14,7 +14,7 @@ export enum EventHistoryStatus {
     Failed = 'f',
 }
 
-// One row per delivery try (including retries) for a given webhook.
+// One row per delivery try (including retries).
 @Schema({ _id: false })
 export class AttemptLog {
     @Prop({
@@ -35,36 +35,9 @@ export class AttemptLog {
 
 export const AttemptLogSchema = SchemaFactory.createForClass(AttemptLog);
 
-@Schema({ _id: false })
-export class Delivery {
-    @Prop({
-        required: true,
-    })
-    webhookId!: string;
-
-    // 'pending' while retries are still possible; set to a terminal
-    // value once the webhook either succeeds or exhausts all attempts.
-    @Prop({
-        type: String,
-        enum: ['pending', 'success', 'failed'],
-        default: 'pending',
-    })
-    status!: 'pending' | 'success' | 'failed';
-
-    @Prop({
-        type: [AttemptLogSchema],
-        default: [],
-    })
-    attempts!: AttemptLog[];
-
-    // Only set while status is 'failed' and a retry is still scheduled;
-    // cleared once the delivery succeeds or exhausts all attempts.
-    @Prop()
-    nextAttemptAt?: Date;
-}
-
-export const DeliverySchema = SchemaFactory.createForClass(Delivery);
-
+// One document per (event, webhook) pair — an event that matches 3
+// webhooks produces 3 EventHistory docs, each tracking that single
+// webhook's delivery independently.
 @Schema({
     timestamps: {
         createdAt: 'cAt',
@@ -82,37 +55,40 @@ export class EventHistory {
     @Prop({
         required: true,
     })
-    oId!: string;
+    bId!: string;
 
     @Prop({
         required: true,
         trim: true,
     })
-    event!: string;
+    e!: string;
 
     @Prop({
         type: SchemaTypes.Mixed,
     })
-    payload?: Record<string, any>;
+    p?: Record<string, any>;
+
+    // Absent only when status is NoSubscribers (no webhook to attach to).
+    @Prop()
+    wId?: string;
 
     @Prop({
         type: String,
         enum: EventHistoryStatus,
         required: true,
     })
-    status!: EventHistoryStatus;
+    s!: EventHistoryStatus;
 
     @Prop({
-        type: [String],
+        type: [AttemptLogSchema],
         default: [],
     })
-    webhookIds!: string[];
+    a!: AttemptLog[];
 
-    @Prop({
-        type: [DeliverySchema],
-        default: [],
-    })
-    deliveries!: Delivery[];
+    // Only set while status is Failed and a retry is still scheduled;
+    // cleared once the delivery succeeds or exhausts all attempts.
+    @Prop()
+    nAAt?: Date;
 
     // Gets added by mongoose timestamps
     cAt!: Date;
@@ -132,12 +108,13 @@ function publishChange(
         EVENT_HISTORY_CHANNEL,
         JSON.stringify({
             _id: doc._id,
-            oId: doc.oId,
-            event: doc.event,
-            payload: doc.payload,
-            status: doc.status,
-            webhookIds: doc.webhookIds,
-            deliveries: doc.deliveries,
+            bId: doc.bId,
+            e: doc.e,
+            p: doc.p,
+            wId: doc.wId,
+            s: doc.s,
+            a: doc.a,
+            nAAt: doc.nAAt,
             cAt: doc.cAt,
             isNew,
         }),

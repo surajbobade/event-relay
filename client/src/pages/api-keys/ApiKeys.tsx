@@ -11,10 +11,13 @@ import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
 import { Button } from '../../forms/auth/Button';
 import { createApiKey, deleteApiKey, getApiKeys } from '../../api/api-keys';
+import { usePermissions } from '../../hooks/usePermissions';
 import type { ApiKey } from '../../types/ApiKey';
 import type { ApiErrorResponse } from '../../types/Api';
 
 export function ApiKeys() {
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('api_keys:manage');
     const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
@@ -64,7 +67,7 @@ export function ApiKeys() {
             setApiKeys((current) => [
                 {
                     _id: res.data._id,
-                    name: res.data.name,
+                    n: res.data.name,
                     cAt: res.data.cAt,
                 },
                 ...current,
@@ -97,7 +100,7 @@ export function ApiKeys() {
 
         if (
             !window.confirm(
-                `Revoke API key "${apiKey.name || apiKey._id}"? Any service using it will stop working.`,
+                `Revoke API key "${apiKey.n || apiKey._id}"? Any service using it will stop working.`,
             )
         ) {
             return;
@@ -134,12 +137,14 @@ export function ApiKeys() {
                         </p>
                     </div>
 
-                    <Button
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition"
-                        onClick={() => setCreating(true)}>
-                        <Plus className="h-4 w-4" />
-                        Create API Key
-                    </Button>
+                    {canManage && (
+                        <Button
+                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition"
+                            onClick={() => setCreating(true)}>
+                            <Plus className="h-4 w-4" />
+                            Create API Key
+                        </Button>
+                    )}
                 </div>
 
                 {/* Newly created key banner */}
@@ -178,7 +183,7 @@ export function ApiKeys() {
                 )}
 
                 {/* Create form */}
-                {creating && (
+                {canManage && creating && (
                     <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                         <label
                             htmlFor="api-key-name"
@@ -245,7 +250,7 @@ export function ApiKeys() {
                                 </div>
 
                                 <p className="truncate text-sm font-medium text-gray-900">
-                                    {apiKey.name || 'Unnamed key'}
+                                    {apiKey.n || 'Unnamed key'}
                                 </p>
                             </div>
 
@@ -261,9 +266,9 @@ export function ApiKeys() {
                             </div>
 
                             <div className="text-sm text-gray-600">
-                                {apiKey.lastUsedAt
+                                {apiKey.lUAt
                                     ? new Date(
-                                          apiKey.lastUsedAt,
+                                          apiKey.lUAt,
                                       ).toLocaleDateString('en-US', {
                                           month: 'short',
                                           day: 'numeric',
@@ -273,6 +278,7 @@ export function ApiKeys() {
                             </div>
 
                             <div className="relative">
+                                {canManage && (
                                 <button
                                     onClick={() =>
                                         setOpenMenuId((current) =>
@@ -284,8 +290,9 @@ export function ApiKeys() {
                                     className="rounded-md p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
                                     <MoreHorizontal className="h-5 w-5" />
                                 </button>
+                                )}
 
-                                {openMenuId === apiKey._id && (
+                                {canManage && openMenuId === apiKey._id && (
                                     <div
                                         ref={menuRef}
                                         className="absolute right-0 bottom-full z-10 mb-1 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">

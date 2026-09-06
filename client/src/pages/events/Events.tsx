@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import { Activity, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+    Activity,
+    ChevronLeft,
+    ChevronRight,
+    CircleHelp,
+    Zap,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
-import { getEvents } from '../../api/events';
+import { getEvents, triggerTestEvent } from '../../api/events';
 import { useAuth } from '../../hooks/useAuth';
 import { useModal } from '../../components/modal/useModal';
 import { EventPayloadModal } from '../../components/events/EventPayloadModal';
 import { EventStatusBadge } from '../../components/events/EventStatusBadge';
+import { HowToTriggerModal } from '../../components/events/HowToTriggerModal';
 import type { EventHistoryItem, EventUpdateMessage } from '../../types/Event';
 import type { ApiErrorResponse } from '../../types/Api';
 
@@ -21,6 +28,7 @@ export function Events() {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [live, setLive] = useState(false);
+    const [triggering, setTriggering] = useState(false);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -93,6 +101,24 @@ export function Events() {
         };
     }, [accessToken]);
 
+    const handleTriggerTest = async () => {
+        setTriggering(true);
+
+        try {
+            await triggerTestEvent();
+            toast.success('Test event triggered');
+        } catch (err: unknown) {
+            const error = err as AxiosError<ApiErrorResponse>;
+            toast.error(
+                error.response?.data?.message ||
+                    error.message ||
+                    'Something went wrong.',
+            );
+        } finally {
+            setTriggering(false);
+        }
+    };
+
     return (
         <div className="min-h-full p-6">
             <div className="mx-auto max-w-7xl">
@@ -104,23 +130,47 @@ export function Events() {
                         </h1>
 
                         <p className="mt-1 text-sm">
-                            Events received from your backend via the API.
+                            Events received from your backend via the API.{' '}
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    openModal({
+                                        component: HowToTriggerModal,
+                                    })
+                                }
+                                className="inline-flex items-center gap-1 font-medium text-[var(--primary)] underline">
+                                <CircleHelp className="h-3.5 w-3.5" />
+                                How to trigger an event?
+                            </button>
                         </p>
                     </div>
 
-                    <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-                            live
-                                ? 'bg-green-50 text-green-700'
-                                : 'bg-gray-100 text-gray-500'
-                        }`}>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            disabled={triggering}
+                            onClick={handleTriggerTest}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                            <Zap className="h-4 w-4" />
+                            {triggering ? 'Triggering...' : 'Trigger Test Event'}
+                        </button>
+
                         <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                                live ? 'animate-pulse bg-green-500' : 'bg-gray-400'
-                            }`}
-                        />
-                        {live ? 'Live' : 'Connecting...'}
-                    </span>
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                                live
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-gray-100 text-gray-500'
+                            }`}>
+                            <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                    live
+                                        ? 'animate-pulse bg-green-500'
+                                        : 'bg-gray-400'
+                                }`}
+                            />
+                            {live ? 'Live' : 'Connecting...'}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Events table */}
@@ -166,34 +216,25 @@ export function Events() {
                                 </div>
 
                                 <code className="truncate text-sm font-medium text-gray-900">
-                                    {event.event}
+                                    {event.e}
                                 </code>
                             </div>
 
                             {/* Payload */}
                             <div className="min-w-0">
                                 <code className="block truncate text-sm text-gray-600">
-                                    {event.payload
-                                        ? JSON.stringify(event.payload)
-                                        : '—'}
+                                    {event.p ? JSON.stringify(event.p) : '—'}
                                 </code>
                             </div>
 
                             {/* Status */}
                             <div>
-                                <EventStatusBadge
-                                    status={event.status}
-                                    webhookCount={event.webhookIds.length}
-                                />
+                                <EventStatusBadge status={event.s} />
                             </div>
 
                             {/* Attempts */}
                             <div className="text-sm text-gray-600">
-                                {event.deliveries?.reduce(
-                                    (sum, delivery) =>
-                                        sum + (delivery.attempts?.length || 0),
-                                    0,
-                                ) || 0}
+                                {event.a.length}
                             </div>
 
                             {/* Received */}

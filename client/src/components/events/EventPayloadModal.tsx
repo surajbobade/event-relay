@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { Check, CircleCheck, CircleX, Clock, Copy } from 'lucide-react';
 import { Modal } from '../modal/Modal';
 import { EventStatusBadge } from './EventStatusBadge';
-import type { EventDelivery, EventHistoryItem } from '../../types/Event';
-
-const DELIVERY_STATUS_STYLES: Record<EventDelivery['status'], string> = {
-    pending: 'bg-gray-100 text-gray-600',
-    success: 'bg-green-50 text-green-700',
-    failed: 'bg-red-50 text-red-700',
-};
+import type { EventHistoryItem } from '../../types/Event';
 
 type EventPayloadModalProps = {
     event: EventHistoryItem;
@@ -18,9 +12,7 @@ type EventPayloadModalProps = {
 export function EventPayloadModal({ event, onClose }: EventPayloadModalProps) {
     const [copied, setCopied] = useState(false);
 
-    const formatted = event.payload
-        ? JSON.stringify(event.payload, null, 2)
-        : 'No payload';
+    const formatted = event.p ? JSON.stringify(event.p, null, 2) : 'No payload';
 
     const handleCopy = () => {
         navigator.clipboard.writeText(formatted);
@@ -29,12 +21,27 @@ export function EventPayloadModal({ event, onClose }: EventPayloadModalProps) {
     };
 
     return (
-        <Modal title='Event Details' subtitle={event.event} onClose={onClose}>
-            <div className="mb-4 flex items-center gap-3">
-                <EventStatusBadge
-                    status={event.status}
-                    webhookCount={event.webhookIds.length}
-                />
+        <Modal title='Event Details' subtitle={event.e} onClose={onClose}>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+                <EventStatusBadge status={event.s} />
+
+                {event.wId && (
+                    <code className="truncate text-xs text-gray-500">
+                        {event.wId}
+                    </code>
+                )}
+
+                {event.s === 'f' && event.nAAt && (
+                    <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="h-3 w-3" />
+                        Next attempt{' '}
+                        {new Date(event.nAAt).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            second: '2-digit',
+                        })}
+                    </span>
+                )}
 
                 <span className="text-xs text-gray-500">
                     {new Date(event.cAt).toLocaleString('en-US', {
@@ -69,85 +76,48 @@ export function EventPayloadModal({ event, onClose }: EventPayloadModalProps) {
                 {formatted}
             </pre>
 
-            {event.deliveries.length > 0 && (
+            {event.a.length > 0 && (
                 <div className="mt-4">
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
                         Delivery Attempts
                     </p>
 
-                    <div className="space-y-3">
-                        {event.deliveries.map((delivery) => (
-                            <div
-                                key={delivery.webhookId}
-                                className="overflow-hidden rounded-lg border border-gray-200">
-                                <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-2">
-                                    <code className="truncate text-xs text-gray-600">
-                                        {delivery.webhookId}
-                                    </code>
+                    <div className="overflow-hidden rounded-lg border border-gray-200">
+                        <div className="divide-y divide-gray-100">
+                            {event.a.map((attempt, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        {attempt.s === 'success' ? (
+                                            <CircleCheck className="h-3.5 w-3.5 shrink-0 text-green-600" />
+                                        ) : (
+                                            <CircleX className="h-3.5 w-3.5 shrink-0 text-red-600" />
+                                        )}
 
-                                    <div className="flex shrink-0 items-center gap-2">
-                                        {delivery.status === 'failed' &&
-                                            delivery.nextAttemptAt && (
-                                                <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                                                    <Clock className="h-3 w-3" />
-                                                    Next attempt{' '}
-                                                    {new Date(
-                                                        delivery.nextAttemptAt,
-                                                    ).toLocaleTimeString(
-                                                        'en-US',
-                                                        {
-                                                            hour: 'numeric',
-                                                            minute: '2-digit',
-                                                            second: '2-digit',
-                                                        },
-                                                    )}
-                                                </span>
-                                            )}
-
-                                        <span
-                                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${DELIVERY_STATUS_STYLES[delivery.status]}`}>
-                                            {delivery.status}
+                                        <span className="shrink-0 text-gray-700">
+                                            Attempt {index + 1}
                                         </span>
-                                    </div>
-                                </div>
 
-                                <div className="divide-y divide-gray-100">
-                                    {delivery.attempts.map((attempt, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
-                                            <div className="flex min-w-0 items-center gap-2">
-                                                {attempt.s === 'success' ? (
-                                                    <CircleCheck className="h-3.5 w-3.5 shrink-0 text-green-600" />
-                                                ) : (
-                                                    <CircleX className="h-3.5 w-3.5 shrink-0 text-red-600" />
-                                                )}
-
-                                                <span className="shrink-0 text-gray-700">
-                                                    Attempt {index + 1}
-                                                </span>
-
-                                                {attempt.eM && (
-                                                    <span className="truncate text-gray-500">
-                                                        — {attempt.eM}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <span className="shrink-0 text-gray-400">
-                                                {new Date(
-                                                    attempt.aAt,
-                                                ).toLocaleTimeString('en-US', {
-                                                    hour: 'numeric',
-                                                    minute: '2-digit',
-                                                    second: '2-digit',
-                                                })}
+                                        {attempt.eM && (
+                                            <span className="truncate text-gray-500">
+                                                — {attempt.eM}
                                             </span>
-                                        </div>
-                                    ))}
+                                        )}
+                                    </div>
+
+                                    <span className="shrink-0 text-gray-400">
+                                        {new Date(
+                                            attempt.aAt,
+                                        ).toLocaleTimeString('en-US', {
+                                            hour: 'numeric',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                        })}
+                                    </span>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

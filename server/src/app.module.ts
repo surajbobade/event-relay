@@ -11,6 +11,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { RedisModule } from './redis/redis.module';
 import { EventsModule } from './events/events.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
+import { BusinessesModule } from './businesses/businesses.module';
 
 @Module({
     imports: [
@@ -37,6 +38,7 @@ import { ApiKeysModule } from './api-keys/api-keys.module';
         RedisModule,
         AuthModule,
         UsersModule,
+        BusinessesModule,
         WebhooksModule,
         ApiKeysModule,
         EventsModule,

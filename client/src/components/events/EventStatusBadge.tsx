@@ -9,7 +9,6 @@ import type { EventHistoryStatus } from '../../types/Event';
 
 type Props = {
     status: EventHistoryStatus;
-    webhookCount?: number;
 };
 
 const STATUS_CONFIG: Record<
@@ -43,7 +42,7 @@ const STATUS_CONFIG: Record<
     },
 };
 
-export function EventStatusBadge({ status, webhookCount }: Props) {
+export function EventStatusBadge({ status }: Props) {
     const config = STATUS_CONFIG[status];
     const Icon = config.icon;
 
@@ -52,9 +51,6 @@ export function EventStatusBadge({ status, webhookCount }: Props) {
             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${config.className}`}>
             <Icon className="h-3.5 w-3.5" />
             {config.label}
-            {status === 'q' && typeof webhookCount === 'number'
-                ? ` (${webhookCount})`
-                : ''}
         </span>
     );
 }

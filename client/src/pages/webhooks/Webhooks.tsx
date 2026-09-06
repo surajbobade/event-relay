@@ -13,11 +13,14 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
 import { deleteWebhook, getWebhooks } from '../../api/webhooks';
+import { usePermissions } from '../../hooks/usePermissions';
 import type { Webhook } from '../../types/Webhook';
 import type { ApiErrorResponse } from '../../types/Api';
 
 export function Webhooks() {
     const navigate = useNavigate();
+    const { hasPermission } = usePermissions();
+    const canManage = hasPermission('webhooks:manage');
     const [webhooks, setWebhooks] = useState<Webhook[]>([]);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -66,7 +69,7 @@ export function Webhooks() {
 
         if (
             !window.confirm(
-                `Delete webhook "${webhook.name}"? This cannot be undone.`,
+                `Delete webhook "${webhook.n}"? This cannot be undone.`,
             )
         ) {
             return;
@@ -103,18 +106,20 @@ export function Webhooks() {
                         </p>
                     </div>
 
-                    <Button
-                        className="inline-flex
+                    {canManage && (
+                        <Button
+                            className="inline-flex
                         inline-flex items-center gap-2
                         px-4 py-2.5
                         text-sm font-medium text-white
                         items-center gap-2
                         shadow-sm
               transition"
-                        onClick={createWebhook}>
-                        <Plus className="h-4 w-4" />
-                        Create Webhook
-                    </Button>
+                            onClick={createWebhook}>
+                            <Plus className="h-4 w-4" />
+                            Create Webhook
+                        </Button>
+                    )}
                 </div>
 
                 {/* Webhooks table */}
@@ -162,7 +167,7 @@ export function Webhooks() {
 
                                 <div className="min-w-0">
                                     <p className="truncate text-sm font-medium text-gray-900">
-                                        {webhook.name}
+                                        {webhook.n}
                                     </p>
 
                                     <p className="mt-0.5 text-xs text-gray-500">
@@ -181,13 +186,13 @@ export function Webhooks() {
                             {/* Endpoint */}
                             <div className="min-w-0">
                                 <code className="block truncate text-sm text-gray-600">
-                                    {webhook.targetUrl}
+                                    {webhook.tUrl}
                                 </code>
                             </div>
 
                             {/* Events */}
                             <div className="flex flex-wrap gap-1.5">
-                                {webhook.events.slice(0, 2).map((event) => (
+                                {webhook.evts.slice(0, 2).map((event) => (
                                     <span
                                         key={event}
                                         className="
@@ -202,16 +207,16 @@ export function Webhooks() {
                                     </span>
                                 ))}
 
-                                {webhook.events.length > 2 && (
+                                {webhook.evts.length > 2 && (
                                     <span className="px-1 py-1 text-xs text-gray-400">
-                                        +{webhook.events.length - 2}
+                                        +{webhook.evts.length - 2}
                                     </span>
                                 )}
                             </div>
 
                             {/* Status */}
                             <div>
-                                {webhook.active ? (
+                                {webhook.act ? (
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                                         <CircleCheck className="h-3.5 w-3.5" />
                                         Active
@@ -226,6 +231,7 @@ export function Webhooks() {
 
                             {/* Actions */}
                             <div className="relative">
+                                {canManage && (
                                 <button
                                     onClick={() =>
                                         setOpenMenuId((current) =>
@@ -243,8 +249,9 @@ export function Webhooks() {
                 ">
                                     <MoreHorizontal className="h-5 w-5" />
                                 </button>
+                                )}
 
-                                {openMenuId === webhook._id && (
+                                {canManage && openMenuId === webhook._id && (
                                     <div
                                         ref={menuRef}
                                         className="absolute right-0 bottom-full z-10 mb-1 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">

@@ -9,6 +9,8 @@ import { useCallback } from 'react';
 import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '../../types/Api';
 import { getMe } from '../../api/users';
+import { getMyBusiness } from '../../api/business';
+import { useBusiness } from '../../hooks/useBusiness';
 import { AuthLayout } from '../../forms/auth/AuthLayout';
 import { TextField } from '../../forms/auth/TextField';
 import { PasswordField } from '../../forms/auth/PasswordField';
@@ -27,6 +29,7 @@ type FormValues = z.infer<typeof schema>;
 export function Login() {
     const navigate = useNavigate();
     const { setUser, setAccessToken } = useAuth();
+    const { setBusiness } = useBusiness();
 
     const {
         register,
@@ -45,6 +48,10 @@ export function Login() {
             const me = await getMe();
 
             setUser(me.data);
+
+            const business = await getMyBusiness();
+
+            setBusiness(business.data);
 
             navigate('/');
         } catch (err: unknown) {

@@ -19,13 +19,13 @@ export class ApiKeyGuard implements CanActivate {
         }
 
         const rawKey = authHeader.slice('Bearer '.length).trim();
-        const userId = await this.apiKeysService.validate(rawKey);
+        const businessId = await this.apiKeysService.validate(rawKey);
 
-        if (!userId) {
+        if (!businessId) {
             throw new UnauthorizedException();
         }
 
-        req.user = { _id: userId };
+        req.user = { bId: businessId };
 
         return true;
     }

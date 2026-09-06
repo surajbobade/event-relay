@@ -1,6 +1,6 @@
 export type ApiKey = {
     _id: string;
-    name?: string;
-    lastUsedAt?: string;
+    n?: string;
+    lUAt?: string;
     cAt: string;
 };

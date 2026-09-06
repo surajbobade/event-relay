@@ -28,41 +28,52 @@ export class EventsService {
         private readonly deliveryQueue: Queue,
     ) {}
 
-    async ingest(userId: string, dto: CreateEventDto) {
+    async ingest(businessId: string, dto: CreateEventDto) {
         const webhooks = await this.webhooksService.findActiveForEvent(
-            userId,
+            businessId,
             dto.event,
         );
 
-        const eventHistory = await this.eventHistoryModel.create({
-            oId: userId,
-            event: dto.event,
-            payload: dto.payload,
-            status:
-                webhooks.length > 0
-                    ? EventHistoryStatus.Queued
-                    : EventHistoryStatus.NoSubscribers,
-            webhookIds: webhooks.map((webhook) => webhook._id),
-        });
-
         if (webhooks.length === 0) {
+            const eventHistory = await this.eventHistoryModel.create({
+                bId: businessId,
+                e: dto.event,
+                p: dto.payload,
+                s: EventHistoryStatus.NoSubscribers,
+            });
+
             return {
-                eventId: eventHistory.id,
+                eventIds: [eventHistory.id],
                 queued: 0,
             };
         }
 
-        await Promise.all(
+        // One document per matched webhook — created individually (not
+        // insertMany) so each fires its own 'save' hook and gets its own
+        // live-update publish.
+        const eventHistories = await Promise.all(
             webhooks.map((webhook) =>
+                this.eventHistoryModel.create({
+                    bId: businessId,
+                    e: dto.event,
+                    p: dto.payload,
+                    wId: webhook._id,
+                    s: EventHistoryStatus.Queued,
+                }),
+            ),
+        );
+
+        await Promise.all(
+            eventHistories.map((eventHistory, index) =>
                 this.deliveryQueue.add(
                     dto.event,
                     {
                         eventId: eventHistory.id,
-                        webhookId: webhook._id,
-                        targetUrl: webhook.targetUrl,
+                        webhookId: webhooks[index]._id,
+                        targetUrl: webhooks[index].tUrl,
                         event: dto.event,
                         payload: dto.payload ?? null,
-                        oId: userId,
+                        bId: businessId,
                     },
                     {
                         attempts: DELIVERY_MAX_ATTEMPTS,
@@ -70,24 +81,36 @@ export class EventsService {
                             type: 'exponential',
                             delay: DELIVERY_BACKOFF_BASE_DELAY_MS,
                         },
+                        removeOnComplete: true,
+                        removeOnFail: true,
                     },
                 ),
             ),
         );
 
         return {
-            eventId: eventHistory.id,
-            queued: webhooks.length,
+            eventIds: eventHistories.map((eventHistory) => eventHistory.id),
+            queued: eventHistories.length,
         };
     }
 
-    async getMyEvents(userId: string, page: number, limit: number) {
+    async triggerTestEvent(businessId: string) {
+        return this.ingest(businessId, {
+            event: 'test.event',
+            payload: {
+                message: 'This is a test event triggered from the dashboard',
+                triggeredAt: new Date().toISOString(),
+            },
+        });
+    }
+
+    async getMyEvents(businessId: string, page: number, limit: number) {
         const skip = (page - 1) * limit;
 
         const [items, total] = await Promise.all([
             this.eventHistoryModel
                 .find({
-                    oId: userId,
+                    bId: businessId,
                 })
                 .sort({
                     cAt: -1,
@@ -97,7 +120,7 @@ export class EventsService {
                 .lean(),
 
             this.eventHistoryModel.countDocuments({
-                oId: userId,
+                bId: businessId,
             }),
         ]);
 
@@ -110,14 +133,14 @@ export class EventsService {
         };
     }
 
-    async getStatsToday(userId: string) {
+    async getStatsToday(businessId: string) {
         const startOfDay = new Date();
         startOfDay.setUTCHours(0, 0, 0, 0);
 
         const [result] = await this.eventHistoryModel.aggregate([
             {
                 $match: {
-                    oId: userId,
+                    bId: businessId,
                     cAt: { $gte: startOfDay },
                 },
             },
@@ -125,17 +148,17 @@ export class EventsService {
                 $facet: {
                     received: [{ $count: 'count' }],
                     success: [
-                        { $match: { status: EventHistoryStatus.Success } },
+                        { $match: { s: EventHistoryStatus.Success } },
                         { $count: 'count' },
                     ],
                     failed: [
-                        { $match: { status: EventHistoryStatus.Failed } },
+                        { $match: { s: EventHistoryStatus.Failed } },
                         { $count: 'count' },
                     ],
                     noSubscribers: [
                         {
                             $match: {
-                                status: EventHistoryStatus.NoSubscribers,
+                                s: EventHistoryStatus.NoSubscribers,
                             },
                         },
                         { $count: 'count' },

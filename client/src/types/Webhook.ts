@@ -1,8 +1,8 @@
 export type Webhook = {
     _id: string;
-    name: string;
-    targetUrl: string;
-    events: string[];
-    active: boolean;
+    n: string;
+    tUrl: string;
+    evts: string[];
+    act: boolean;
     cAt: string;
 };

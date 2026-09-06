@@ -21,20 +21,20 @@ export class ApiKey {
     @Prop({
         required: true,
     })
-    oId!: string;
+    bId!: string;
 
     @Prop({
         trim: true,
     })
-    name?: string;
+    n?: string;
 
     @Prop({
         required: true,
     })
-    keyHash!: string;
+    kH!: string;
 
     @Prop()
-    lastUsedAt?: Date;
+    lUAt?: Date;
 
     // Gets added by mongoose timestamps
     cAt!: Date;

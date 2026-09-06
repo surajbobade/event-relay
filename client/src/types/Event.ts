@@ -6,20 +6,14 @@ export type DeliveryAttemptLog = {
     aAt: string;
 };
 
-export type EventDelivery = {
-    webhookId: string;
-    status: 'pending' | 'success' | 'failed';
-    attempts: DeliveryAttemptLog[];
-    nextAttemptAt?: string;
-};
-
 export type EventHistoryItem = {
     _id: string;
-    event: string;
-    payload?: Record<string, unknown>;
-    status: EventHistoryStatus;
-    webhookIds: string[];
-    deliveries: EventDelivery[];
+    e: string;
+    p?: Record<string, unknown>;
+    wId?: string;
+    s: EventHistoryStatus;
+    a: DeliveryAttemptLog[];
+    nAAt?: string;
     cAt: string;
 };
 

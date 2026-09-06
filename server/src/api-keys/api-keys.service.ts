@@ -15,39 +15,39 @@ export class ApiKeysService {
         private readonly apiKeyModel: Model<ApiKeyDocument>,
     ) {}
 
-    async create(userId: string, dto: CreateApiKeyDto) {
+    async create(businessId: string, dto: CreateApiKeyDto) {
         const secret = nanoid(32);
 
         const apiKey = await this.apiKeyModel.create({
-            oId: userId,
-            name: dto.name?.trim(),
-            keyHash: await bcrypt.hash(secret, 10),
+            bId: businessId,
+            n: dto.name?.trim(),
+            kH: await bcrypt.hash(secret, 10),
         });
 
         return {
             _id: apiKey.id,
-            name: apiKey.name,
+            name: apiKey.n,
             key: `${KEY_PREFIX}_${apiKey.id}.${secret}`,
             cAt: apiKey.cAt,
         };
     }
 
-    async getMyApiKeys(userId: string) {
+    async getMyApiKeys(businessId: string) {
         return this.apiKeyModel
             .find({
-                oId: userId,
+                bId: businessId,
             })
-            .select('-keyHash')
+            .select('-kH')
             .sort({
                 cAt: -1,
             })
             .lean();
     }
 
-    async deleteApiKey(userId: string, apiKeyId: string) {
+    async deleteApiKey(businessId: string, apiKeyId: string) {
         const result = await this.apiKeyModel.deleteOne({
             _id: apiKeyId,
-            oId: userId,
+            bId: businessId,
         });
 
         if (result.deletedCount === 0) {
@@ -70,7 +70,7 @@ export class ApiKeysService {
             return null;
         }
 
-        const matches = await bcrypt.compare(secret, apiKey.keyHash);
+        const matches = await bcrypt.compare(secret, apiKey.kH);
         if (!matches) {
             return null;
         }
@@ -79,11 +79,11 @@ export class ApiKeysService {
             .updateOne(
                 { _id: id },
                 {
-                    lastUsedAt: new Date(),
+                    lUAt: new Date(),
                 },
             )
             .exec();
 
-        return apiKey.oId;
+        return apiKey.bId;
     }
 }

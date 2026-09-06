@@ -19,7 +19,7 @@ type DeliveryJobData = {
     targetUrl: string;
     event: string;
     payload: Record<string, unknown> | null;
-    oId: string;
+    bId: string;
 };
 
 @Processor(WEBHOOK_DELIVERY_QUEUE)
@@ -39,10 +39,10 @@ export class EventsWorker extends WorkerHost {
         await this.eventHistoryModel.updateOne(
             {
                 _id: eventId,
-                status: EventHistoryStatus.Queued,
+                s: EventHistoryStatus.Queued,
             },
             {
-                status: EventHistoryStatus.InProgress,
+                s: EventHistoryStatus.InProgress,
             },
         );
 
@@ -81,13 +81,7 @@ export class EventsWorker extends WorkerHost {
                   )
                 : undefined;
 
-        await this.recordAttempt(
-            eventId,
-            webhookId,
-            succeeded,
-            errorMessage,
-            nextAttemptAt,
-        );
+        await this.recordAttempt(eventId, succeeded, errorMessage, nextAttemptAt);
 
         if (!succeeded) {
             this.logger.warn(
@@ -109,88 +103,36 @@ export class EventsWorker extends WorkerHost {
 
     private async recordAttempt(
         eventId: string,
-        webhookId: string,
         succeeded: boolean,
         errorMessage?: string,
         nextAttemptAt?: Date,
     ) {
-        // Create the per-webhook delivery entry the first time we see it.
-        await this.eventHistoryModel.updateOne(
-            {
-                _id: eventId,
-                'deliveries.webhookId': { $ne: webhookId },
-            },
-            {
-                $push: {
-                    deliveries: {
-                        webhookId,
-                        status: 'pending',
-                        attempts: [],
-                    },
-                },
-            },
-        );
-
         // Log this attempt and immediately reflect its outcome as the
-        // delivery's current status — a failure shows up right away
-        // instead of waiting for retries to exhaust; a later retry
-        // that succeeds will flip it back.
+        // event's current status — a failure shows up right away instead
+        // of waiting for retries to exhaust; a later retry that succeeds
+        // will flip it back.
         await this.eventHistoryModel.updateOne(
             {
                 _id: eventId,
-                'deliveries.webhookId': webhookId,
             },
             {
                 $push: {
-                    'deliveries.$.attempts': {
+                    a: {
                         s: succeeded ? 'success' : 'failed',
                         ...(errorMessage && { eM: errorMessage }),
                         aAt: new Date(),
                     },
                 },
                 $set: {
-                    'deliveries.$.status': succeeded ? 'success' : 'failed',
-                    ...(nextAttemptAt && {
-                        'deliveries.$.nextAttemptAt': nextAttemptAt,
-                    }),
+                    s: succeeded
+                        ? EventHistoryStatus.Success
+                        : EventHistoryStatus.Failed,
+                    ...(nextAttemptAt && { nAAt: nextAttemptAt }),
                 },
                 ...(!nextAttemptAt && {
-                    $unset: { 'deliveries.$.nextAttemptAt': '' },
+                    $unset: { nAAt: '' },
                 }),
             },
         );
-
-        await this.syncOverallStatus(eventId);
-    }
-
-    private async syncOverallStatus(eventId: string) {
-        const eventHistory = await this.eventHistoryModel.findById(eventId);
-
-        if (!eventHistory) {
-            return;
-        }
-
-        const anyFailed = eventHistory.deliveries.some(
-            (delivery) => delivery.status === 'failed',
-        );
-
-        const allSucceeded =
-            eventHistory.webhookIds.length > 0 &&
-            eventHistory.deliveries.filter(
-                (delivery) => delivery.status === 'success',
-            ).length === eventHistory.webhookIds.length;
-
-        const status = anyFailed
-            ? EventHistoryStatus.Failed
-            : allSucceeded
-              ? EventHistoryStatus.Success
-              : EventHistoryStatus.InProgress;
-
-        if (eventHistory.status !== status) {
-            await this.eventHistoryModel.updateOne(
-                { _id: eventId },
-                { status },
-            );
-        }
     }
 }

@@ -12,13 +12,13 @@ export class WebhooksService {
         private readonly webhookModel: Model<WebhookDocument>,
     ) {}
 
-    async create(userId: string, dto: CreateWebhookDto) {
+    async create(businessId: string, dto: CreateWebhookDto) {
         const webhook = await this.webhookModel.create({
-            oId: userId,
-            name: dto.name.trim(),
-            targetUrl: dto.targetUrl.trim(),
-            events: dto.events,
-            active: dto.active ?? true,
+            bId: businessId,
+            n: dto.name.trim(),
+            tUrl: dto.targetUrl.trim(),
+            evts: dto.events,
+            act: dto.active ?? true,
         });
 
         return {
@@ -26,10 +26,10 @@ export class WebhooksService {
         };
     }
 
-    async getMyWebhooks(userId: string) {
+    async getMyWebhooks(businessId: string) {
         return this.webhookModel
             .find({
-                oId: userId,
+                bId: businessId,
             })
             .sort({
                 cAt: -1,
@@ -37,11 +37,11 @@ export class WebhooksService {
             .lean();
     }
 
-    async getWebhookDetails(userId: string, webhookId: string) {
+    async getWebhookDetails(businessId: string, webhookId: string) {
         const webhook = await this.webhookModel
             .findOne({
                 _id: webhookId,
-                oId: userId,
+                bId: businessId,
             })
             .lean();
 
@@ -52,36 +52,36 @@ export class WebhooksService {
         return webhook;
     }
 
-    async findActiveForEvent(userId: string, event: string) {
+    async findActiveForEvent(businessId: string, event: string) {
         return this.webhookModel
             .find({
-                oId: userId,
-                active: true,
-                events: event,
+                bId: businessId,
+                act: true,
+                evts: event,
             })
             .lean();
     }
 
     async updateWebhook(
-        userId: string,
+        businessId: string,
         webhookId: string,
         dto: UpdateWebhookDto,
     ) {
         const webhook = await this.webhookModel.findOneAndUpdate(
             {
                 _id: webhookId,
-                oId: userId,
+                bId: businessId,
             },
             {
-                ...(dto.name !== undefined && { name: dto.name.trim() }),
+                ...(dto.name !== undefined && { n: dto.name.trim() }),
                 ...(dto.targetUrl !== undefined && {
-                    targetUrl: dto.targetUrl.trim(),
+                    tUrl: dto.targetUrl.trim(),
                 }),
-                ...(dto.events !== undefined && { events: dto.events }),
-                ...(dto.active !== undefined && { active: dto.active }),
+                ...(dto.events !== undefined && { evts: dto.events }),
+                ...(dto.active !== undefined && { act: dto.active }),
             },
             {
-                new: true,
+                returnDocument: 'after',
             },
         );
 
@@ -92,10 +92,10 @@ export class WebhooksService {
         return webhook;
     }
 
-    async deleteWebhook(userId: string, webhookId: string) {
+    async deleteWebhook(businessId: string, webhookId: string) {
         const result = await this.webhookModel.deleteOne({
             _id: webhookId,
-            oId: userId,
+            bId: businessId,
         });
 
         if (result.deletedCount === 0) {

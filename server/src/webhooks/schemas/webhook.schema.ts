@@ -21,30 +21,30 @@ export class Webhook {
     @Prop({
         required: true,
     })
-    oId!: string;
+    bId!: string;
 
     @Prop({
         required: true,
         trim: true,
     })
-    name!: string;
+    n!: string;
 
     @Prop({
         required: true,
         trim: true,
     })
-    targetUrl!: string;
+    tUrl!: string;
 
     @Prop({
         type: [String],
         required: true,
     })
-    events!: string[];
+    evts!: string[];
 
     @Prop({
         default: true,
     })
-    active!: boolean;
+    act!: boolean;
 
     // Gets added by mongoose timestamps
     cAt!: Date;

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
-import { CircleAlert, CircleCheck, CircleX, Inbox } from 'lucide-react';
+import { CircleAlert, CircleCheck, CircleX, Inbox, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
 import { getEventStats } from '../../api/events';
 import { useAuth } from '../../hooks/useAuth';
+import { usePermissions } from '../../hooks/usePermissions';
 import type { EventStats } from '../../types/Event';
 import type { ApiErrorResponse } from '../../types/Api';
 
@@ -42,6 +43,8 @@ const STAT_CARDS: Array<{
 
 export function Dashboard() {
     const { accessToken } = useAuth();
+    const { hasPermission } = usePermissions();
+    const canViewEvents = hasPermission('events:view');
     const [stats, setStats] = useState<EventStats>({
         received: 0,
         success: 0,
@@ -66,11 +69,15 @@ export function Dashboard() {
     }, []);
 
     useEffect(() => {
+        if (!canViewEvents) {
+            return;
+        }
+
         fetchStats();
-    }, [fetchStats]);
+    }, [canViewEvents, fetchStats]);
 
     useEffect(() => {
-        if (!accessToken) {
+        if (!accessToken || !canViewEvents) {
             return;
         }
 
@@ -115,46 +122,64 @@ export function Dashboard() {
                         </p>
                     </div>
 
-                    <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-                            live
-                                ? 'bg-green-50 text-green-700'
-                                : 'bg-gray-100 text-gray-500'
-                        }`}>
+                    {canViewEvents && (
                         <span
-                            className={`h-1.5 w-1.5 rounded-full ${
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
                                 live
-                                    ? 'animate-pulse bg-green-500'
-                                    : 'bg-gray-400'
-                            }`}
-                        />
-                        {live ? 'Live' : 'Connecting...'}
-                    </span>
-                </div>
-
-                {/* Stat cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {STAT_CARDS.map(
-                        ({ key, label, icon: Icon, iconClassName }) => (
-                            <div
-                                key={key}
-                                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                                <div
-                                    className={`mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg ${iconClassName}`}>
-                                    <Icon className="h-4 w-4" />
-                                </div>
-
-                                <p className="text-2xl font-semibold tracking-tight text-gray-900">
-                                    {stats[key]}
-                                </p>
-
-                                <p className="mt-1 text-sm text-gray-500">
-                                    {label}
-                                </p>
-                            </div>
-                        ),
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-gray-100 text-gray-500'
+                            }`}>
+                            <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                    live
+                                        ? 'animate-pulse bg-green-500'
+                                        : 'bg-gray-400'
+                                }`}
+                            />
+                            {live ? 'Live' : 'Connecting...'}
+                        </span>
                     )}
                 </div>
+
+                {!canViewEvents ? (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
+                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100">
+                            <Lock className="h-5 w-5 text-gray-500" />
+                        </div>
+
+                        <h3 className="text-sm font-semibold text-gray-900">
+                            No access to event stats
+                        </h3>
+
+                        <p className="mt-1 max-w-sm text-sm text-gray-500">
+                            Ask an admin to grant you the "View events"
+                            permission.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {STAT_CARDS.map(
+                            ({ key, label, icon: Icon, iconClassName }) => (
+                                <div
+                                    key={key}
+                                    className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                                    <div
+                                        className={`mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg ${iconClassName}`}>
+                                        <Icon className="h-4 w-4" />
+                                    </div>
+
+                                    <p className="text-2xl font-semibold tracking-tight text-gray-900">
+                                        {stats[key]}
+                                    </p>
+
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        {label}
+                                    </p>
+                                </div>
+                            ),
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

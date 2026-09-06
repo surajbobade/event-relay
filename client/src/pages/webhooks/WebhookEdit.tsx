@@ -87,10 +87,10 @@ export function WebhookEdit() {
                 {webhook && (
                     <WebhookForm
                         initialValues={{
-                            name: webhook.name,
-                            targetUrl: webhook.targetUrl,
-                            events: webhook.events,
-                            active: webhook.active,
+                            name: webhook.n,
+                            targetUrl: webhook.tUrl,
+                            events: webhook.evts,
+                            active: webhook.act,
                         }}
                         submitLabel="Save Changes"
                         submitIcon={Save}

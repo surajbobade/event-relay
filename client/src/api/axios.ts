@@ -1,8 +1,16 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
+// In dev, go through Vite's /__api proxy (see vite.config.ts) so the
+// browser sees same-origin requests — required for Safari to reliably
+// accept/keep the SameSite=None refresh-token cookie. In production,
+// hit the API's own origin directly.
+const API_BASE_URL = import.meta.env.DEV
+    ? '/__api'
+    : import.meta.env.VITE_SERVER_URL;
+
 export const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_SERVER_URL,
+    baseURL: API_BASE_URL,
     withCredentials: true,
 });
 
@@ -26,7 +34,7 @@ const refreshAccessToken = () => {
     if (!refreshPromise) {
         refreshPromise = axios
             .post<{ accessToken: string }>(
-                `${import.meta.env.VITE_SERVER_URL}/auth/refresh`,
+                `${API_BASE_URL}/auth/refresh`,
                 undefined,
                 { withCredentials: true },
             )

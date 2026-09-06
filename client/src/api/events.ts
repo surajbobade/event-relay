@@ -7,3 +7,7 @@ export const getEvents = (page = 1, limit = 20) => {
 export const getEventStats = () => {
     return apiClient.get('/events/stats');
 };
+
+export const triggerTestEvent = () => {
+    return apiClient.post('/events/test');
+};

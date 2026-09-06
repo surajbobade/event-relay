@@ -3,6 +3,7 @@ import {
     Webhook,
     Activity,
     KeyRound,
+    Users,
     LogOut,
     PanelLeftOpen,
     PanelLeftClose,
@@ -10,6 +11,8 @@ import {
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useBusiness } from '../../hooks/useBusiness';
+import { usePermissions } from '../../hooks/usePermissions';
 import { logout } from '../../api/auth';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
@@ -65,11 +68,14 @@ export function SidebarLink({
 
 export function Sidebar({ collapsed, toggleCollapsed }: SidebarProps) {
     const { logout: logoutState } = useAuth();
+    const { setBusiness } = useBusiness();
+    const { isAdmin, hasPermission } = usePermissions();
 
     const handleLogout = useCallback(async () => {
         try {
             await logout();
             logoutState();
+            setBusiness(null);
         } catch (err: unknown) {
             const error = err as AxiosError<ApiErrorResponse>;
             toast.error(
@@ -78,7 +84,7 @@ export function Sidebar({ collapsed, toggleCollapsed }: SidebarProps) {
                     'Something went wrong.',
             );
         }
-    }, [logoutState]);
+    }, [logoutState, setBusiness]);
 
     return (
         <aside
@@ -87,14 +93,21 @@ export function Sidebar({ collapsed, toggleCollapsed }: SidebarProps) {
             }`}>
             <div className="flex h-20 items-center justify-between border-b border-gray-800 px-5">
                 {!collapsed ? (
-                    <div>
-                        <h1 className="text-xl font-bold text-[var(--primary)]">
-                            Event Relay
-                        </h1>
+                    <div className="flex items-center gap-3">
+                        <Webhook
+                            size={28}
+                            className="shrink-0 text-[var(--primary)]"
+                        />
 
-                        <p className="text-xs text-gray-400">
-                            Event Delivery Infrastructure
-                        </p>
+                        <div>
+                            <h1 className="text-xl font-bold text-[var(--primary)]">
+                                Event Relay
+                            </h1>
+
+                            <p className="text-xs text-gray-400">
+                                Event Delivery Infrastructure
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     <Webhook
@@ -117,24 +130,38 @@ export function Sidebar({ collapsed, toggleCollapsed }: SidebarProps) {
                     collapsed={collapsed}
                     end
                 />
-                <SidebarLink
-                    to="/webhooks"
-                    icon={Webhook}
-                    label="Webhooks"
-                    collapsed={collapsed}
-                />
-                <SidebarLink
-                    to="/events"
-                    icon={Activity}
-                    label="Events"
-                    collapsed={collapsed}
-                />
-                <SidebarLink
-                    to="/api-keys"
-                    icon={KeyRound}
-                    label="API Keys"
-                    collapsed={collapsed}
-                />
+                {hasPermission('webhooks:view') && (
+                    <SidebarLink
+                        to="/webhooks"
+                        icon={Webhook}
+                        label="Webhooks"
+                        collapsed={collapsed}
+                    />
+                )}
+                {hasPermission('events:view') && (
+                    <SidebarLink
+                        to="/events"
+                        icon={Activity}
+                        label="Events"
+                        collapsed={collapsed}
+                    />
+                )}
+                {hasPermission('api_keys:view') && (
+                    <SidebarLink
+                        to="/api-keys"
+                        icon={KeyRound}
+                        label="API Keys"
+                        collapsed={collapsed}
+                    />
+                )}
+                {isAdmin && (
+                    <SidebarLink
+                        to="/users"
+                        icon={Users}
+                        label="Manage Members"
+                        collapsed={collapsed}
+                    />
+                )}
             </nav>
             <div className="border-t border-gray-800 p-4">
                 <button

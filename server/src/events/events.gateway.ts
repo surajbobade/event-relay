@@ -41,7 +41,9 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
 
             try {
                 const event = JSON.parse(message);
-                this.server.to(`user:${event.oId}`).emit('event:new', event);
+                this.server
+                    .to(`business:${event.bId}`)
+                    .emit('event:new', event);
             } catch {
                 this.logger.error('Failed to parse event from redis channel');
             }
@@ -61,7 +63,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
                 secret: process.env.JWT_ACCESS_SECRET,
             });
 
-            client.join(`user:${payload.sub}`);
+            client.join(`business:${payload.bId}`);
         } catch {
             client.disconnect();
         }

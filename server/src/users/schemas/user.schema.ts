@@ -1,8 +1,14 @@
 import { nanoid } from 'nanoid';
 import { HydratedDocument } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { DEFAULT_PERMISSIONS } from '../permissions.constants';
 
 export type UserDocument = HydratedDocument<User>;
+
+export enum UserRole {
+    Admin = 'admin',
+    Member = 'member',
+}
 
 @Schema({ _id: false })
 export class Profile {
@@ -64,6 +70,27 @@ export class User {
     _id!: string;
 
     @Prop({
+        required: true,
+    })
+    bId!: string;
+
+    @Prop({
+        type: String,
+        enum: UserRole,
+        default: UserRole.Member,
+    })
+    role!: UserRole;
+
+    // Only meaningful for Members — Admins always have full access
+    // regardless of this list. Factory default (not a static array) so
+    // every document gets its own copy, not a shared reference.
+    @Prop({
+        type: [String],
+        default: () => [...DEFAULT_PERMISSIONS],
+    })
+    p!: string[];
+
+    @Prop({
         type: ProfileSchema,
         required: true,
     })
@@ -80,6 +107,10 @@ export class User {
         required: true,
     })
     auth!: Auth;
+
+    // Gets added by mongoose timestamps
+    cAt!: Date;
+    uAt!: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

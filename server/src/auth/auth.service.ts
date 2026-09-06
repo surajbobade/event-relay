@@ -2,7 +2,10 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 
 import * as bcrypt from 'bcrypt';
+import { nanoid } from 'nanoid';
 import { UsersService } from 'src/users/users.service';
+import { UserRole } from 'src/users/schemas/user.schema';
+import { BusinessesService } from 'src/businesses/businesses.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -10,6 +13,7 @@ import { LoginDto } from './dto/login.dto';
 export class AuthService {
     constructor(
         private readonly usersService: UsersService,
+        private readonly businessesService: BusinessesService,
         private readonly jwtService: JwtService,
     ) {}
 
@@ -21,7 +25,18 @@ export class AuthService {
 
         const hashedPassword = await bcrypt.hash(body.password, 12);
 
+        // Business.oId needs the user's id, and User.bId needs the
+        // business's id — generate the user id upfront to break the cycle.
+        const userId = nanoid();
+
+        // Every user belongs to a business — created empty here, and
+        // named later via the business-setup step.
+        const business = await this.businessesService.create(userId);
+
         const user = await this.usersService.create({
+            _id: userId,
+            bId: business.id,
+            role: UserRole.Admin,
             profile: {
                 name: body.name,
             },
@@ -53,7 +68,11 @@ export class AuthService {
             throw new UnauthorizedException();
         }
 
-        const tokens = await this.generateTokens(user.id, user.email.address);
+        const tokens = await this.generateTokens(
+            user.id,
+            user.email.address,
+            user.bId,
+        );
 
         await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -83,17 +102,22 @@ export class AuthService {
             throw new UnauthorizedException();
         }
 
-        const tokens = await this.generateTokens(user.id, user.email.address);
+        const tokens = await this.generateTokens(
+            user.id,
+            user.email.address,
+            user.bId,
+        );
         await this.updateRefreshToken(user.id, tokens.refreshToken);
         return tokens;
     }
 
-    private async generateTokens(userId: string, email: string) {
+    private async generateTokens(userId: string, email: string, bId: string) {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(
                 {
                     sub: userId,
                     email,
+                    bId,
                 },
                 {
                     secret: process.env.JWT_ACCESS_SECRET,
@@ -105,6 +129,7 @@ export class AuthService {
                 {
                     sub: userId,
                     email,
+                    bId,
                 },
                 {
                     secret: process.env.JWT_REFRESH_SECRET,
