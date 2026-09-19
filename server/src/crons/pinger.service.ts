@@ -11,7 +11,7 @@ export class PingerService {
 
     // Ping services so that service do not go down
     // Reason: We are on free tier so service spins down due to inactivity
-    @Cron(CronExpression.EVERY_10_MINUTES)
+    @Cron(CronExpression.EVERY_5_MINUTES)
     async pingWebsite() {
         for (let i = 0; i < EVENT_RELAY_SERVICE_URLS.length; i++) {
             try {
